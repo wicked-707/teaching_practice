@@ -32,7 +32,7 @@ const Unisignup = () => {
     event.preventDefault();
     if (validateForm()) {
       try {
-        await axios.post('/api/universities', formData);
+        await axios.post('/api/register/universities', formData);
         setSubmitted(true);
       } catch (error) {
         console.error('There was an error registering the university:', error);

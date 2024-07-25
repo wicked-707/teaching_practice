@@ -8,8 +8,11 @@ const navigate = useNavigate();
     navigate('/highschoolsignin');
   }; 
 
-    const goToUni = () => {
-    navigate('/unisignin');
+    const goToHod = () => {
+    navigate('/hodsignin');
+  }; 
+    const goToSup = () => {
+    navigate('/supervisorsignin');
   }; 
 
     const goToStudent = () => {
@@ -33,8 +36,11 @@ const navigate = useNavigate();
         <button onClick={goToStudent} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
           Student / Teacher
         </button>
-        <button onClick={goToUni} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
-          University Representative
+        <button onClick={goToHod} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
+          HOD
+        </button>
+        <button onClick={goToSup} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
+          Supervisor
         </button>
         <button onClick={goToSchool} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
           High School

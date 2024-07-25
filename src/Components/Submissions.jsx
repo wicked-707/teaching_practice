@@ -137,7 +137,7 @@ const Submissions = () => {
         <div className="relative flex items-center">
           <h1 className='text-lg text-slate-800'>
             <span className='text-sm'>Hello, </span>
-            {student ? student.first_name : 'Student-teacher'}
+            {student ? student.first_name : 'student'}
           </h1>
           <button 
             type="button" 
