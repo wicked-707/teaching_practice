@@ -76,6 +76,17 @@ app.get('/courses', async (req, res) => {
   }
 });
 
+// Fetch all universities
+app.get('/universities', async (req, res) => {
+  try {
+    const allUniversities = await pool.query('SELECT * FROM university');
+    res.json(allUniversities.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 
 // -----------------------------------------------------------------------------------
 
@@ -131,7 +142,220 @@ app.post('/student', async (req, res) => {
 });
 
 
+//----------------------------------------------------------------------------------
 
+// Route to register a new university
+app.post('/register/universities', async (req, res) => {
+  const {
+    university_name,
+    registration_number,
+    charter_number,
+    official_email,
+    website,
+    county
+  } = req.body;
+
+  try {
+    // Validate input
+    if (!university_name || !registration_number || !official_email || !county) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Insert data into the university table
+    const result = await pool.query(
+      `INSERT INTO university (
+         university_name, 
+         registration_number, 
+         charter_number, 
+         official_email, 
+         website, 
+         county
+       ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [university_name, registration_number, charter_number, official_email, website, county]
+    );
+
+    // Respond with the newly created university
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// HOD signup route
+app.post('/hods/signup', async (req, res) => {
+  const { hod_name, email, password, university_id } = req.body;
+
+  // Input validation
+  if (!hod_name || !email || !password || !university_id) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+    // Check if email already exists
+    const emailCheck = await pool.query('SELECT * FROM hods WHERE email = $1', [email]);
+    if (emailCheck.rows.length > 0) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    // Insert new HOD into the database
+    const newHod = await pool.query(
+      'INSERT INTO hods (hod_name, email, password, university_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      [hod_name, email, password, university_id]
+    );
+
+    res.status(201).json({ message: 'HOD registered successfully', hod: newHod.rows[0] });
+  } catch (error) {
+    console.error('Error registering HOD:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// HOD signin route
+app.post('/hods/signin', async (req, res) => {
+  const { email, pass } = req.body;
+
+  // Validate input
+  if (!email || !pass) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    // Check if HOD exists
+    const hodResult = await pool.query(
+      'SELECT * FROM hods WHERE email = $1',
+      [email]
+    );
+
+    if (hodResult.rows.length === 0) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    const hod = hodResult.rows[0];
+
+    // Validate password
+    const validPassword = await bcrypt.compare(pass, hod.password);
+    if (!validPassword) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: hod.id,
+        email: hod.email,
+        university_id: hod.university_id,
+        department_id: hod.department_id,
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Return success response with token
+    res.status(200).json({
+      message: 'Signin successful',
+      token,
+    });
+  } catch (error) {
+    console.error('Error in HOD signin:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// supervisor signUp route
+app.post('/supervisor/signup', async (req, res) => {
+  try {
+    const { supervisor_name, email, university_id, course_id, password } = req.body;
+
+    // Validate input
+    if (!supervisor_name || !email || !university_id || !course_id || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Check if email already exists
+    const emailCheck = await pool.query(
+      'SELECT * FROM supervisors WHERE email = $1',
+      [email]
+    );
+
+    if (emailCheck.rows.length > 0) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
+    // Insert new supervisor into database
+    const newSupervisor = await pool.query(
+      'INSERT INTO supervisors (supervisor_name, email, university_id, course_id, password) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [supervisor_name, email, university_id, course_id, password]
+    );
+
+    // Return success response
+    res.status(201).json({
+      message: 'Supervisor created successfully',
+      supervisor: {
+        id: newSupervisor.rows[0].id,
+        supervisor_name: newSupervisor.rows[0].supervisor_name,
+        email: newSupervisor.rows[0].email,
+        university_id: newSupervisor.rows[0].university_id,
+        course_id: newSupervisor.rows[0].course_id
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in supervisor signup:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Supervisor signin route
+app.post('/supervisor/signin', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate input
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    // Check if supervisor exists
+    const supervisorResult = await pool.query(
+      'SELECT * FROM supervisors WHERE email = $1',
+      [email]
+    );
+
+    if (supervisorResult.rows.length === 0) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    const supervisor = supervisorResult.rows[0];
+
+    // Validate password
+    const validPassword = await bcrypt.compare(password, supervisor.password);
+    if (!validPassword) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: supervisor.id,
+        email: supervisor.email,
+        university_id: supervisor.university_id,
+        course_id: supervisor.course_id,
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Return success response with token
+    res.status(200).json({
+      message: 'Signin successful',
+      token,
+    });
+  } catch (error) {
+    console.error('Error in supervisor signin:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 // ALL UNVERIFIED STUDENTS
 // Fetch all students with pending status
