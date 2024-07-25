@@ -383,6 +383,7 @@ function Studentportal() {
         }
 
         const decodedToken = jwtDecode(studentToken);
+        console.log(decodedToken);
         if (!decodedToken) {
           setError('Invalid token format');
           setLoading(false);

@@ -189,31 +189,39 @@ const LessonPlanForm = () => {
     };
 
     useEffect(() => {
-        const studentToken = getCurrentStudent()
-        console.log(studentToken)
-    
-        const decodedToken = jwtDecode(studentToken);
-        if (!decodedToken) {
-          setError('Invalid token format');
-          setLoading(false);
-          return;
+        const studentToken = getCurrentStudent();
+        if (studentToken) {
+            try {
+                const decodedToken = jwtDecode(studentToken);
+                if (decodedToken && decodedToken.registration_id) {
+                    setFormData(prevData => ({
+                        ...prevData,
+                        student_id: decodedToken.registration_id
+                    }));
+                } else {
+                    setError('Invalid token format');
+                }
+            } catch (error) {
+                setError('Error decoding token');
+            }
+        } else {
+            setError('No student token found');
         }
-        setStudentId(decodedToken.registration_id);
-    
-        
-      }, []);
-    //   console.log(studentId)
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        console.log(studentId);
+
 
         try {
             const response = await axios.post('http://localhost:5000/lesson-plan', formData);
+
             setSuccess('Lesson plan submitted successfully!');
             setFormData({
-                student_id: '',
+                student_id: formData.student_id, 
                 subject_name: '',
                 topic_name: '',
                 subtopic_name: '',
@@ -221,9 +229,9 @@ const LessonPlanForm = () => {
                 lesson_time: '',
                 lesson_objectives: ''
             });
-            alert('Lesson plan submitted successfully!');
+            // alert('Lesson plan submitted successfully!');
         } catch (err) {
-          alert('Failed to submit lesson plan. Please try again.');
+        //   alert('Failed to submit lesson plan. Please try again.');
             setError('Failed to submit lesson plan. Please try again.');
         }
     };

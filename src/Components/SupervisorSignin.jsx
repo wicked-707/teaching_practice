@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
 
 const SupervisorSignin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('jane.doe@example.com');
+  const [password, setPassword] = useState('SecureP@ssw0rd');
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
 
@@ -22,12 +23,30 @@ const SupervisorSignin = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post('/api/supervisor/signin', {
+      const response = await axios.post('http://localhost:5000/supervisor/signin', {
         email,
         password,
       });
       setMessage(response.data.message);
+      alert('sign in succesful')
+      console.log("djks");
       // Handle successful signin, e.g., store token, redirect, etc.
+
+      const { token, data} = response.data;
+     
+      if(!token) throw new Error('No Token Found')
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(data));
+        const decodedToken = jwtDecode(token);
+        const approval_status = decodedToken.approval_status;
+      // redirect to supersor page in the status is verified
+
+      // console.log("decodedToken", decodedToken);
+      window.location.href = '/supervisorportal';
+
+      if (approval_status === 'verified') {
+        window.location.href = '/supervisorportal';
+      }
     } catch (error) {
       if (error.response && error.response.data.message) {
         setMessage(error.response.data.message);

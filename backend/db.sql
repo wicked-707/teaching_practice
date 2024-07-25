@@ -283,6 +283,14 @@ CREATE TABLE lesson_plan (
 );
 
 
+CREATE TABLE assessment_marks (
+    mark_id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES student(registration_id),
+    total_marks INTEGER NOT NULL CHECK (total_marks > 0),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 
 

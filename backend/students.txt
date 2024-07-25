@@ -1,0 +1,72 @@
+[
+  {
+    "first_name": "John",
+    "last_name": "Doe",
+    "id_number": "12345678",
+    "email": "john.doe@example.com",
+    "phone_number": "+254700123456",
+    "university_id": 1,
+    "graduation_date": "2024-12-15",
+    "primary_teaching_subject": 1,
+    "secondary_teaching_subject": 2,
+    "kenya_county": "Nairobi",
+    "hashed_password": "password123",
+    "confirm_pass": "password123"
+  },
+  {
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "id_number": "87654321",
+    "email": "jane.smith@example.com",
+    "phone_number": "+254711234567",
+    "university_id": 2,
+    "graduation_date": "2023-11-20",
+    "primary_teaching_subject": 3,
+    "secondary_teaching_subject": 4,
+    "kenya_county": "Mombasa",
+    "hashed_password": "password456",
+    "confirm_pass": "password456"
+  },
+  {
+    "first_name": "Peter",
+    "last_name": "Johnson",
+    "id_number": "23456789",
+    "email": "peter.johnson@example.com",
+    "phone_number": "+254722345678",
+    "university_id": 3,
+    "graduation_date": "2024-10-05",
+    "primary_teaching_subject": 2,
+    "secondary_teaching_subject": 3,
+    "kenya_county": "Kisumu",
+    "hashed_password": "password789",
+    "confirm_pass": "password789"
+  },
+  {
+    "first_name": "Lucy",
+    "last_name": "Brown",
+    "id_number": "34567890",
+    "email": "lucy.brown@example.com",
+    "phone_number": "+254733456789",
+    "university_id": 4,
+    "graduation_date": "2023-09-30",
+    "primary_teaching_subject": 4,
+    "secondary_teaching_subject": 1,
+    "kenya_county": "Nakuru",
+    "hashed_password": "password012",
+    "confirm_pass": "password012"
+  },
+  {
+    "first_name": "Mark",
+    "last_name": "Williams",
+    "id_number": "45678901",
+    "email": "mark.williams@example.com",
+    "phone_number": "+254744567890",
+    "university_id": 5,
+    "graduation_date": "2024-08-25",
+    "primary_teaching_subject": 1,
+    "secondary_teaching_subject": 3,
+    "kenya_county": "Eldoret",
+    "hashed_password": "password345",
+    "confirm_pass": "password345"
+  }
+]
