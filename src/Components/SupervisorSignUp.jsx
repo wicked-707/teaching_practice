@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const HodSignup = () => {
-  const [formData, setFormData] = useState({
-    hod_name: '',
-    email: '',
-    password: '',
-    university_id: '',
-  });
-
+const SupervisorSignup = () => {
+  const [universities, setUniversities] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
-  const [universities, setUniversities] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleChange = (event) => {
-    setFormData({ ...formData, [event.target.name]: event.target.value });
-  };
+  const [formData, setFormData] = useState({
+    supervisor_name: '',
+    email:'',
+    university_id: '',
+    course_id: '',
+    password: '',
+  });
 
   useEffect(() => {
     const fetchUniversities = async () => {
@@ -27,17 +26,31 @@ const HodSignup = () => {
       }
     };
 
+    const fetchCourses = async () => {
+      try {
+        const response = await axios.get('/api/courses');
+        setCourses(response.data);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    };
+
     fetchUniversities();
+    fetchCourses();
   }, []);
+
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+  };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.hod_name) newErrors.hod_name = 'HOD name is required';
+    if (!formData.supervisor_name) newErrors.supervisor_name = 'Supervisor name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email address';
+    if (!formData.university_id) newErrors.university_id = 'University is required';
+    if (!formData.course_id) newErrors.course_id = 'Course is required';
     if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters long';
-    if (!formData.university_id) newErrors.university_id = 'University ID is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,10 +61,9 @@ const HodSignup = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post('/api/hods/signup', formData);
+      const response = await axios.post('/api/supervisor/signup', formData);
       setMessage(response.data.message);
-      setFormData({ hod_name: '', email: '', password: '', university_id: '' });
-      setErrors({});
+      setSubmitted(true);
     } catch (error) {
       if (error.response && error.response.data.message) {
         setMessage(error.response.data.message);
@@ -63,19 +75,25 @@ const HodSignup = () => {
 
   return (
     <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">HOD Signup</h2>
-      {message && <p className={message.includes('success') ? 'text-green-600' : 'text-red-600'}>{message}</p>}
+      <h2 className="text-2xl font-bold mb-6">Supervisor Signup</h2>
+      {submitted ? (
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Supervisor Registered Successfully!</h2>
+          <p>Thank you for registering as a Supervisor.</p>
+          {message && <p className="mb-4 text-red-600">{message}</p>}
+        </div>
+      ) : (
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label className="block text-gray-700">HOD Name</label>
+          <label className="block text-gray-700">Supervisor Name</label>
           <input
             type="text"
-            name="hod_name"
+            name="supervisor_name"
             className="w-full px-4 py-2 border rounded-lg focus:outline-none"
-            value={formData.hod_name}
+            value={formData.supervisor_name}
             onChange={handleChange}
           />
-          {errors.hod_name && <p className="text-red-600">{errors.hod_name}</p>}
+          {errors.supervisor_name && <p className="text-red-600">{errors.supervisor_name}</p>}
         </div>
 
         <div className="mb-4">
@@ -88,18 +106,6 @@ const HodSignup = () => {
             onChange={handleChange}
           />
           {errors.email && <p className="text-red-600">{errors.email}</p>}
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          {errors.password && <p className="text-red-600">{errors.password}</p>}
         </div>
 
         <div>
@@ -128,6 +134,42 @@ const HodSignup = () => {
               {errors.university_id && <p>{errors.university_id}</p>}
             </div>
 
+              
+            <div>
+  <label>Primary Teaching Subject</label>
+  <select 
+    name="course_id" 
+    value={formData.course_id} 
+    onChange={(e) => {
+      const selectedSubject = courses.find(s => s.course_id.toString() === e.target.value);
+      setFormData({
+        ...formData,
+        course_id: selectedSubject ? selectedSubject.course_id : '',
+        course_name: selectedSubject ? selectedSubject.course_name : ''
+      });
+    }}
+  >
+    <option value="">Select Subject</option>
+    {courses.map((course) => (
+      <option key={course.course_id} value={course.course_id.toString()}>
+        {course.course_name}
+      </option>
+    ))}
+  </select>
+  {errors.course_id && <p>{errors.course_id}</p>}
+</div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700">Password</label>
+          <input
+            type="password"
+            name="password"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none"
+            value={formData.password}
+            onChange={handleChange}
+          />
+          {errors.password && <p className="text-red-600">{errors.password}</p>}
+        </div>
 
         <button
           type="submit"
@@ -136,8 +178,9 @@ const HodSignup = () => {
           Signup
         </button>
       </form>
+      )}
     </div>
   );
 };
 
-export default HodSignup;
+export default SupervisorSignup;

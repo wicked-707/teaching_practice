@@ -30,6 +30,9 @@ import ManageUsers from './Pages/ManageUsers';
 import ManageVacancies from './Pages/ManageVacancies';
 import Reports from './Pages/Reports';
 import Settings from './Pages/Settings';
+import HodSignin from "./Components/Hodsignin";
+import SupervisorSignup from "./Components/SupervisorSignUp";
+import SupervisorSignin from "./Components/SupervisorSignin";
 const App = () => {
 
   const isAuthenticated = () => {
@@ -45,6 +48,9 @@ const App = () => {
           <Route path="/studentportal" element={<Studentportal />} />
           <Route path="/loginchoice" element={<LoginChoice />} />
           <Route path="/unisignup" element={<Unisignup />} />
+          <Route path="/hodsignin" element={<HodSignin />} />
+          <Route path="/supervisorsignup" element={<SupervisorSignup />} />
+          <Route path="/supervisorsignin" element={<SupervisorSignin />} />
           <Route path="/unisignin" element={<UniSignin />} />
           <Route path="/universityportal" element={<UniversityPortal />} />
           <Route path="/hodportal" element={<HodPortal />} />
