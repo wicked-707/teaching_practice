@@ -43,7 +43,7 @@ const Submissions = () => {
         }
 
         const userRoles = decodedToken.role;
-        if (!userRoles.includes('student-teacher')) {
+        if (!userRoles.includes('student')) {
           setError('Access denied');
           setLoading(false);
           return;

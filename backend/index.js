@@ -39,7 +39,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const pool = new Pool({
   user: 'postgres',
-  password: '960X513OV',
+  password: 'drowssap',
   host: 'localhost',
   port: 5432,
   database: 'tp',
