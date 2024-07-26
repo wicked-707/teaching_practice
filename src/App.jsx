@@ -30,9 +30,11 @@ import ManageUsers from './Pages/ManageUsers';
 import ManageVacancies from './Pages/ManageVacancies';
 import Reports from './Pages/Reports';
 import Settings from './Pages/Settings';
-import HodSignin from "./Components/Hodsignin";
+import HodSignin from "./Components/authentications/Hodsignin";
 import SupervisorSignup from "./Components/SupervisorSignUp";
 import SupervisorSignin from "./Components/SupervisorSignin";
+import StudentSchemes from "./Components/student/AssessmentDetails";
+import StudentGrade from "./Components/student/grades";
 const App = () => {
 
   const isAuthenticated = () => {
@@ -55,6 +57,12 @@ const App = () => {
           <Route path="/universityportal" element={<UniversityPortal />} />
           <Route path="/hodportal" element={<HodPortal />} />
           <Route path="/supervisorportal" element={<SupervisorPortal />} />
+
+
+          <Route path="/assessment-details/student/:student_id" element={<StudentSchemes />} />
+          <Route path="/studentportal/grading" element={<StudentGrade />} />
+
+
           <Route path="/hodsignup" element={<HodSignup />} />
           <Route path="/schemesofwork" element={<SchemesofWork />} />
           <Route path="/lessonplan" element={<LessonPlan />} />

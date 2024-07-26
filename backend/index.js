@@ -29,7 +29,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Access-Control-Allow-Origin']
 }));
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4';
 
 
 
@@ -39,7 +40,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const pool = new Pool({
   user: 'postgres',
-  password: '960X513OV',
+  password: 'drowssap',
   host: 'localhost',
   port: 5432,
   database: 'tp',
@@ -322,6 +323,7 @@ app.post('/supervisor/signup', async (req, res) => {
 // Supervisor signin route
 app.post('/supervisor/signin', async (req, res) => {
   const { email, password } = req.body;
+  console.log(email, password);
 
   // Validate input
   if (!email || !password) {
@@ -342,8 +344,9 @@ app.post('/supervisor/signin', async (req, res) => {
     const supervisor = supervisorResult.rows[0];
 
     // Validate password
-    const validPassword = await bcrypt.compare(password, supervisor.password);
-    if (!validPassword) {
+    // const validPassword = await bcrypt.compare(password, supervisor.password);
+
+    if (password !== supervisor.password) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
@@ -351,11 +354,15 @@ app.post('/supervisor/signin', async (req, res) => {
     const token = jwt.sign(
       {
         id: supervisor.id,
+        name: supervisor.supervisor_name,
         email: supervisor.email,
         university_id: supervisor.university_id,
         course_id: supervisor.course_id,
+        approval_status: supervisor.approval_status,
+        course: supervisor.course_id,
+        role: "supervisor",
       },
-      JWT_SECRET,
+      '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4',
       { expiresIn: '1h' }
     );
 
@@ -369,6 +376,8 @@ app.post('/supervisor/signin', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
 
 // ALL UNVERIFIED STUDENTS
 // Fetch all students with pending status
@@ -1154,6 +1163,7 @@ app.post('/lesson-plan', async (req, res) => {
           lesson_objectives
       } = req.body;
 
+
       const newLessonPlan = await pool.query(
           `INSERT INTO lesson_plan (
               student_id, 
@@ -1176,8 +1186,95 @@ app.post('/lesson-plan', async (req, res) => {
       );
       res.json(newLessonPlan.rows[0]);
   } catch (err) {
-      console.error(err.message);
+    console.error('Error adding lesson plan:', err);
       res.status(500).send('Server error');
+  }
+});
+
+
+
+
+// get all student
+
+app.get('/students/verified', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        registration_id, 
+        first_name, 
+        last_name, 
+        id_number, 
+        email, 
+        phone_number, 
+        university_id, 
+        graduation_date, 
+        primary_teaching_subject, 
+        secondary_teaching_subject, 
+        kenya_county, 
+        approval_status, 
+        approval_date, 
+        created_at, 
+        updated_at
+      FROM 
+        student 
+      WHERE 
+        approval_status = 'verified'
+    `;
+    
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No verified students found' });
+    }
+    
+    res.json({ students: result.rows });
+  } catch (error) {
+    console.error('Error fetching verified students:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+
+// FETCH BY SUBJECT
+app.get('/students/subject/:subjectId', async (req, res) => {
+  const { subjectId } = req.params;
+  
+  try {
+    const query = `
+      SELECT 
+        registration_id, 
+        first_name, 
+        last_name, 
+        id_number, 
+        email, 
+        phone_number, 
+        university_id, 
+        graduation_date, 
+        primary_teaching_subject, 
+        secondary_teaching_subject, 
+        kenya_county, 
+        approval_status, 
+        approval_date, 
+        created_at, 
+        updated_at
+      FROM 
+        student 
+      WHERE 
+        primary_teaching_subject = $1
+    `;
+    
+    const result = await pool.query(query, [subjectId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No students found for this subject' });
+    }
+    
+    res.json({ students: result.rows });
+  } catch (error) {
+    console.error('Error fetching students by primary subject:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -1189,8 +1286,180 @@ app.post('/lesson-plan', async (req, res) => {
 
 
 
+// FETCH ALL THE SCHEME OF WORK FOR A SINGLE STUDENT:
+app.get('/schemes_of_work/:student_id', async (req, res) => {
+  const { student_id } = req.params;
+
+  try {
+    const query = `
+      SELECT 
+        s.registration_id,
+        s.first_name,
+        s.last_name,
+        sow.scheme_id, 
+        sow.week_number, 
+        l.lesson_id, 
+        l.lesson_number, 
+        l.instructional_objectives, 
+        l.life_approach, 
+        l.teaching_activities, 
+        l.methods_strategies, 
+        l.resources_references, 
+        l.assessment, 
+        l.remarks
+      FROM 
+        schemes_of_work sow
+      LEFT JOIN 
+        lessons l 
+      ON 
+        sow.scheme_id = l.scheme_id
+      LEFT JOIN
+        student s
+      ON
+        sow.student_id = s.registration_id
+      WHERE 
+        sow.student_id = $1
+      ORDER BY 
+        sow.week_number, l.lesson_number
+    `;
+
+    const result = await pool.query(query, [student_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No schemes of work found for this student' });
+    }
+
+    const studentInfo = {
+      registration_id: result.rows[0].registration_id,
+      first_name: result.rows[0].first_name,
+      last_name: result.rows[0].last_name,
+    };
+
+    // Group the results by scheme_id and format the response
+    const schemesOfWork = {};
+    
+    result.rows.forEach(row => {
+      if (!schemesOfWork[row.scheme_id]) {
+        schemesOfWork[row.scheme_id] = {
+          scheme_id: row.scheme_id,
+          week_number: row.week_number,
+          lessons: []
+        };
+      }
+
+      if (row.lesson_id) {
+        schemesOfWork[row.scheme_id].lessons.push({
+          lesson_id: row.lesson_id,
+          lesson_number: row.lesson_number,
+          instructional_objectives: row.instructional_objectives,
+          life_approach: row.life_approach,
+          teaching_activities: row.teaching_activities,
+          methods_strategies: row.methods_strategies,
+          resources_references: row.resources_references,
+          assessment: row.assessment,
+          remarks: row.remarks
+        });
+      }
+    });
+
+    res.json({
+      student: studentInfo,
+      schemes_of_work: Object.values(schemesOfWork)
+    });
+  } catch (error) {
+    console.error('Error fetching schemes of work:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 
+
+// GET ALL Lesson Plan
+// GET endpoint to fetch lesson plans for a specific student
+app.get('/lesson-plans/:student_id', async (req, res) => {
+  const { student_id } = req.params;
+
+  try {
+    const query = `
+      SELECT 
+        student_id,
+        subject_name,
+        topic_name,
+        subtopic_name,
+        lesson_date,
+        lesson_time,
+        lesson_objectives
+      FROM 
+        lesson_plan
+      WHERE 
+        student_id = $1
+      ORDER BY 
+        lesson_date, lesson_time
+    `;
+
+    const result = await pool.query(query, [student_id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No lesson plans found for this student' });
+    }
+
+    res.json({ lesson_plans: result.rows });
+  } catch (error) {
+    console.error('Error fetching lesson plans:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// Endpoint to add assessment marks
+app.post('/grading/assessment-marks/:student_id', async (req, res) => {
+  try {
+    const { student_id } = req.params;
+    const { marks } = req.body;
+
+    console.log(student_id, marks);
+
+    // Insert the assessment marks
+    const result = await pool.query(
+      `INSERT INTO assessment_marks (
+        student_id, 
+        total_marks
+      ) VALUES ($1, $2) RETURNING *`,
+      [student_id, marks]
+    );
+
+    res.status(201).json({ message: 'Assessment marks added successfully', assessment_marks: result.rows[0] });
+  } catch (error) {
+    console.error('Error adding assessment marks:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+// GET THE GRADING OF A SINGLE STUDENT
+// Endpoint to fetch grading by student_id
+app.get('/grading/:student_id', async (req, res) => {
+  try {
+    const { student_id } = req.params;
+
+    // Query to fetch the assessment marks for the student
+    const result = await pool.query(
+      `SELECT * FROM assessment_marks WHERE student_id = $1`,
+      [student_id]
+    );
+
+    // Check if any records were found
+    if (result.rows.length === 0) {
+      return res.json({ message: 'No assessment marks found for the given student ID' });
+    }
+
+    res.status(200).json({ message: 'Assessment marks retrieved successfully', assessment_marks: result.rows });
+  } catch (error) {
+    console.error('Error fetching assessment marks:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 
 
@@ -1277,6 +1546,7 @@ const authenticateJWT = (req, res, next) => {
     res.status(400).json({ message: 'Invalid token' });
   }
 };
+
 
 // Protected Routes
 app.get('/student', authenticateJWT, (req, res) => {

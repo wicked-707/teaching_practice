@@ -88,6 +88,7 @@ const Submissions = () => {
               Dear {student?.first_name}! This portal is designed to help you submit your Scheme of Work, Lesson Plan, and Records efficiently and effectively.
               <br />Please follow the instructions below to navigate through the portal and submit your work.
             </p>
+            
 
             <h2 className="text-xl font-semibold mb-2">How to Use the Portal</h2>
             <ul className="list-disc list-inside mb-4">

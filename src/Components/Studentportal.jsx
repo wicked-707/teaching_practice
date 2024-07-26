@@ -383,6 +383,7 @@ function Studentportal() {
         }
 
         const decodedToken = jwtDecode(studentToken);
+        console.log(decodedToken);
         if (!decodedToken) {
           setError('Invalid token format');
           setLoading(false);
@@ -476,9 +477,9 @@ function Studentportal() {
               Submit Assessment
             </button>
           </Link>
-          <Link to="/lessonobservationreport" className="mr-2">
+          <Link to="/studentportal/grading" className="mr-2">
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-1 md:px-4 text-sm md:text-md rounded">
-              Assessment Grading
+              Assessment Grade
             </button>
           </Link>
           <div className="flex items-center">
