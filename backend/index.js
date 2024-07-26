@@ -213,10 +213,12 @@ app.post('/hods/signup', async (req, res) => {
 
 // HOD signin route
 app.post('/hods/signin', async (req, res) => {
-  const { email, pass } = req.body;
+  console.log('Received signin request:', req.body);
+  const { email, password } = req.body;
 
   // Validate input
-  if (!email || !pass) {
+  if (!email || !password) {
+    console.log('Missing email or password');
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
@@ -226,6 +228,7 @@ app.post('/hods/signin', async (req, res) => {
       'SELECT * FROM hods WHERE email = $1',
       [email]
     );
+    console.log('HOD found:', hodResult.rows.length > 0);
 
     if (hodResult.rows.length === 0) {
       return res.status(400).json({ message: 'Invalid email or password' });
@@ -234,7 +237,9 @@ app.post('/hods/signin', async (req, res) => {
     const hod = hodResult.rows[0];
 
     // Validate password
-    const validPassword = await bcrypt.compare(pass, hod.password);
+    const validPassword = await bcrypt.compare(password, hod.password);
+    console.log('Password valid:', validPassword);
+
     if (!validPassword) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
@@ -242,25 +247,33 @@ app.post('/hods/signin', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       {
-        id: hod.id,
+        id: hod.hod_id,
+        name: hod.hod_name,
         email: hod.email,
         university_id: hod.university_id,
-        department_id: hod.department_id,
+        role: 'hod'
       },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Return success response with token
+    // Return success response with token and user data
     res.status(200).json({
       message: 'Signin successful',
       token,
+      data: {
+        id: hod.hod_id,
+        name: hod.hod_name,
+        email: hod.email,
+        university_id: hod.university_id,
+      }
     });
   } catch (error) {
     console.error('Error in HOD signin:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 // supervisor signUp route
 app.post('/supervisor/signup', async (req, res) => {

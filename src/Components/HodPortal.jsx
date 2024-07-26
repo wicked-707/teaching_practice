@@ -3,91 +3,163 @@ import axios from 'axios';
 
 const HODPortal = () => {
   const [students, setStudents] = useState([]);
+  const [error, setError] = useState([]);
+  const [pendingStudents, setPendingStudents] = useState([]);
   const [supervisors, setSupervisors] = useState([]);
   const [approvedStudents, setApprovedStudents] = useState([]);
   const [approvedSupervisors, setApprovedSupervisors] = useState([]);
   const [studentsGrades, setStudentsGrades] = useState([]);
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [loading, setLoading] = useState('false');
 
   useEffect(() => {
-    fetchStudents();
-    fetchSupervisors();
-    fetchApprovedStudents();
-    fetchApprovedSupervisors();
-    fetchStudentsGrades();
+    fetchPendingStudents();
+    // fetchStudents();
+    // fetchSupervisors();
+    // fetchApprovedStudents();
+    // fetchApprovedSupervisors();
+    // fetchStudentsGrades();
   }, []);
 
-  const fetchStudents = async () => {
-    const response = await axios.get('/api/students/pending');
-    setStudents(response.data);
-  };
+  const fetchPendingStudents = async () => {
+      try {
+        const response = await axios.get('/api/students/pending');
+        setPendingStudents(response.data.students);
+        console.log(pendingStudents);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch pending students');
+        setLoading(false);
+      }
+    };
 
-  const fetchSupervisors = async () => {
-    const response = await axios.get('/api/supervisors/pending');
-    setSupervisors(response.data);
-  };
+    const handleStatusUpdate = async (registrationId, status) => {
+  try {
+    const url = `/students/${registrationId}/status`;
+    console.log(`Sending request to: ${url}`);
+    console.log('Request payload:', { approval_status: status });
+    
+    const response = await axios.put(url, { approval_status: status });
+    
+    console.log('Update response:', response.data);
 
-  const fetchApprovedStudents = async () => {
-    const response = await axios.get('/api/students/approved');
-    setApprovedStudents(response.data);
-  };
+    if (response.data.message === 'Student status updated successfully') {
+      setPendingStudents(pendingStudents.filter(student => student.registration_id !== registrationId));
+      console.log(`Student ${registrationId} removed from list`);
+    } else {
+      setError('Unexpected response from server');
+    }
+  } catch (err) {
+    console.error('Error updating student status:', err);
+    if (err.response) {
+      console.error('Response data:', err.response.data);
+      console.error('Response status:', err.response.status);
+      console.error('Response headers:', err.response.headers);
+    }
+    setError(`Failed to update student status: ${err.message}`);
+  }
+};
 
-  const fetchApprovedSupervisors = async () => {
-    const response = await axios.get('/api/supervisors/approved');
-    setApprovedSupervisors(response.data);
-  };
+  // const fetchStudents = async () => {
+  //   const response = await axios.get('/api/students/pending');
+  //   setStudents(response.data);
+  // };
 
-  const fetchStudentsGrades = async () => {
-    const response = await axios.get('/api/students/grades');
-    setStudentsGrades(response.data);
-  };
+  // const fetchSupervisors = async () => {
+  //   const response = await axios.get('/api/supervisors/pending');
+  //   setSupervisors(response.data);
+  // };
 
-  const approveStudent = async (studentId) => {
-    await axios.post(`/api/students/${studentId}/approve`);
-    fetchStudents();
-    fetchApprovedStudents();
-  };
+  // const fetchApprovedStudents = async () => {
+  //   const response = await axios.get('/api/students/approved');
+  //   setApprovedStudents(response.data);
+  // };
 
-  const disapproveStudent = async (studentId) => {
-    await axios.post(`/api/students/${studentId}/disapprove`);
-    fetchApprovedStudents();
-    fetchStudents();
-  };
+  // const fetchApprovedSupervisors = async () => {
+  //   const response = await axios.get('/api/supervisors/approved');
+  //   setApprovedSupervisors(response.data);
+  // };
 
-  const approveSupervisor = async (supervisorId) => {
-    await axios.post(`/api/supervisors/${supervisorId}/approve`);
-    fetchSupervisors();
-    fetchApprovedSupervisors();
-  };
+  // const fetchStudentsGrades = async () => {
+  //   const response = await axios.get('/api/students/grades');
+  //   setStudentsGrades(response.data);
+  // };
 
-  const disapproveSupervisor = async (supervisorId) => {
-    await axios.post(`/api/supervisors/${supervisorId}/disapprove`);
-    fetchApprovedSupervisors();
-    fetchSupervisors();
-  };
+  // const approveStudent = async (studentId) => {
+  //   await axios.post(`/api/students/${studentId}/approve`);
+  //   fetchStudents();
+  //   fetchApprovedStudents();
+  // };
+
+  // const disapproveStudent = async (studentId) => {
+  //   await axios.post(`/api/students/${studentId}/disapprove`);
+  //   fetchApprovedStudents();
+  //   fetchStudents();
+  // };
+
+  // const approveSupervisor = async (supervisorId) => {
+  //   await axios.post(`/api/supervisors/${supervisorId}/approve`);
+  //   fetchSupervisors();
+  //   fetchApprovedSupervisors();
+  // };
+
+  // const disapproveSupervisor = async (supervisorId) => {
+  //   await axios.post(`/api/supervisors/${supervisorId}/disapprove`);
+  //   fetchApprovedSupervisors();
+  //   fetchSupervisors();
+  // };
 
   const renderSection = () => {
     switch (activeSection) {
       case 'approveStudents':
         return (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Approve Students</h2>
-            {students.map((student) => (
-              <div key={student.id} className="flex justify-between items-center bg-gray-100 p-4 mb-2">
-                <div>
-                  <p>Name: {student.first_name} {student.last_name}</p>
-                  <p>Email: {student.email}</p>
-                  <p>Primary Subject: {student.primary_teaching_subject}</p>
-                </div>
-                <button
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                  onClick={() => approveStudent(student.id)}
-                >
+          <div className="pending-students">
+      <h2>Pending Students</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>ID Number</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>University</th>
+            <th>Graduation Date</th>
+            <th>Primary Subject</th>
+            <th>Secondary Subject</th>
+            <th>County</th>
+            <th>Registration Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pendingstudents.map((student) => (
+            <tr key={student.registration_id}>
+              <td>{`${student.first_name} ${student.last_name}`}</td>
+              <td>{student.id_number}</td>
+              <td>{student.email}</td>
+              <td>{student.phone_number}</td>
+              <td>{student.university_id}</td>
+              <td>{new Date(student.graduation_date).toLocaleDateString()}</td>
+              <td>{student.primary_teaching_subject}</td>
+              <td>{student.secondary_teaching_subject}</td>
+              <td>{student.kenya_county}</td>
+              <td>{student.approval_status}</td>
+              <td>{new Date(student.created_at).toLocaleDateString()}</td>
+              <td>
+                <button onClick={() => handleStatusUpdate(student.registration_id, 'verified')}>
                   Approve
                 </button>
-              </div>
-            ))}
-          </div>
+              </td>
+              <td>
+                <button onClick={() => handleStatusUpdate(student.registration_id, 'rejected')}>
+                  Reject
+                </button>
+              </td>
+            </tr>
+            
+          ))}
+        </tbody>
+      </table>
+    </div>
         );
       case 'approveSupervisors':
         return (
