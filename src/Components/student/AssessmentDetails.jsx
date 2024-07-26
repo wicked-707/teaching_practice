@@ -194,8 +194,9 @@ const StudentAssessmentDashboard = () => {
             <label htmlFor="finalGrade" className='text-lg '>Final Marks</label>
             <input type="number" id="finalGrade" max={100} onChange={(e) => setMarks(e.target.value)} min={1} name="finalGrade" className='border mx-2  border-gray-300 rounded-md px-4 py-2 mb-4' />
             <button
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
+                  className="bg-green-500 hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-500 text-white font-bold py-2 px-4 rounded mt-4"
                   onClick={() => SubmitGrade(student_id)}
+                  disabled={schemesOfWork.length === 0}
                 >
                   Submit
                 </button>

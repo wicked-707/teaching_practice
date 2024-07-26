@@ -1424,6 +1424,31 @@ app.post('/grading/assessment-marks/:student_id', async (req, res) => {
 
 
 
+// GET THE GRADING OF A SINGLE STUDENT
+// Endpoint to fetch grading by student_id
+app.get('/grading/:student_id', async (req, res) => {
+  try {
+    const { student_id } = req.params;
+
+    // Query to fetch the assessment marks for the student
+    const result = await pool.query(
+      `SELECT * FROM assessment_marks WHERE student_id = $1`,
+      [student_id]
+    );
+
+    // Check if any records were found
+    if (result.rows.length === 0) {
+      return res.json({ message: 'No assessment marks found for the given student ID' });
+    }
+
+    res.status(200).json({ message: 'Assessment marks retrieved successfully', assessment_marks: result.rows });
+  } catch (error) {
+    console.error('Error fetching assessment marks:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 
 
 

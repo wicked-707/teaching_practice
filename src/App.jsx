@@ -34,6 +34,7 @@ import HodSignin from "./Components/authentications/Hodsignin";
 import SupervisorSignup from "./Components/SupervisorSignUp";
 import SupervisorSignin from "./Components/SupervisorSignin";
 import StudentSchemes from "./Components/student/AssessmentDetails";
+import StudentGrade from "./Components/student/grades";
 const App = () => {
 
   const isAuthenticated = () => {
@@ -59,6 +60,7 @@ const App = () => {
 
 
           <Route path="/assessment-details/student/:student_id" element={<StudentSchemes />} />
+          <Route path="/studentportal/grading" element={<StudentGrade />} />
 
 
           <Route path="/hodsignup" element={<HodSignup />} />

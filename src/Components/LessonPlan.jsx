@@ -167,9 +167,8 @@ import { jwtDecode } from 'jwt-decode';
 import { getCurrentStudent } from '../Services/AuthService';
 
 const LessonPlanForm = () => {
-    const [studentId, setStudentId] = useState('');
     const [formData, setFormData] = useState({
-        student_id: studentId,
+        student_id: '',
         subject_name: '',
         topic_name: '',
         subtopic_name: '',
@@ -213,7 +212,6 @@ const LessonPlanForm = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
-        console.log(studentId);
 
 
         try {
@@ -249,7 +247,7 @@ const LessonPlanForm = () => {
                             type="number"
                             id="student_id"
                             name="student_id"
-                            value={studentId}
+                            value={formData.student_id}
                             disabled
                             min={1}
                             required
