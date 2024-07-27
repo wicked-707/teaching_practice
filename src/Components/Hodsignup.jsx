@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const HodSignup = () => {
@@ -6,8 +7,11 @@ const HodSignup = () => {
     hod_name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     university_id: '',
   });
+
+  const navigate= useNavigate()
 
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
@@ -30,6 +34,7 @@ const HodSignup = () => {
     fetchUniversities();
   }, []);
 
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.hod_name) newErrors.hod_name = 'HOD name is required';
@@ -37,6 +42,7 @@ const HodSignup = () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email address';
     if (!formData.password) newErrors.password = 'Password is required';
     if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters long';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!formData.university_id) newErrors.university_id = 'University ID is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -52,6 +58,7 @@ const HodSignup = () => {
       setMessage(response.data.message);
       setFormData({ hod_name: '', email: '', password: '', university_id: '' });
       setErrors({});
+      navigate('/hodsignin')
     } catch (error) {
       if (error.response && error.response.data.message) {
         setMessage(error.response.data.message);
@@ -71,7 +78,7 @@ const HodSignup = () => {
           <input
             type="text"
             name="hod_name"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-blue-500"
             value={formData.hod_name}
             onChange={handleChange}
           />
@@ -83,31 +90,19 @@ const HodSignup = () => {
           <input
             type="email"
             name="email"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-blue-500"
             value={formData.email}
             onChange={handleChange}
           />
           {errors.email && <p className="text-red-600">{errors.email}</p>}
         </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          {errors.password && <p className="text-red-600">{errors.password}</p>}
-        </div>
-
-        <div>
+        <div className='py-4'>
               <label>University</label>
               
                 <select 
                   name="university_id" 
                   value={formData.university_id} 
+                  className='w-full px-4 mb-2 py-2 border rounded-lg focus:outline-blue-500'
                   onChange={(e) => {
                     const selectedUniversity = universities.find(u => u.university_id.toString() === e.target.value);
                     setFormData({
@@ -127,6 +122,29 @@ const HodSignup = () => {
              
               {errors.university_id && <p>{errors.university_id}</p>}
             </div>
+
+
+        <div className="mb-4">
+          <label className="block text-gray-700">Password</label>
+          <input
+            type="password"
+            name="password"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-blue-500"
+            value={formData.password}
+            onChange={handleChange}
+          />
+          {errors.password && <p className="text-red-600">{errors.password}</p>}
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Confirm Password</label>
+          <input type="password"
+            name="confirmPassword"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-blue-500"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+          />
+          {errors.confirmPassword && <p className="text-red-600">{errors.confirmPassword}</p>}
+        </div>
 
 
         <button

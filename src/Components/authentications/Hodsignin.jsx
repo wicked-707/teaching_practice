@@ -39,16 +39,8 @@ const Hodsignin = () => {
 
       const decodedToken = jwtDecode(token);
       const userRoles = decodedToken.role;
-      console.log(userRoles);
+      navigate('/hodportal');
 
-      if (userRoles.includes('hod')) {
-        const redirectTo = location.state?.from || '/hodportal';
-        navigate(redirectTo);
-      } else if (userRoles.includes('hod')) {
-        navigate('/hodportal');
-      } else {
-        setError('Access denied');
-      }
     } else {
       setError('Invalid response from server');
     }
@@ -79,7 +71,7 @@ const Hodsignin = () => {
         className="md:ml-20 w-36 h-36 ml-3 md:w-56 md:h-56 object-cover  mb-8"
       />
         {notification && <p className="text-green-600 mb-4">{notification}</p>}
-        <h2 className="text-lg md:text-2xl font-semibold mb-6 text-center">Student Login</h2>
+        <h2 className="text-lg md:text-2xl font-semibold mb-6 text-center">HOD Login</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-8">
             <input

@@ -177,7 +177,7 @@ INSERT INTO course (course_code, course_name) VALUES
   "first_name": "John",
   "last_name": "Doe",
   "id_number": "12345678",
-  "email": "john.doe@example.com",
+  "email": "john.doe@gmail.com",
   "phone_number": "+254700123456",
   "university_id": 1,
   "graduation_date": "2024-12-15",
@@ -301,3 +301,13 @@ CREATE TABLE assessment_marks (
 -- Topic:
 -- Year:
 -- Term:
+
+
+-- data for supervisors
+INSERT INTO supervisors (supervisor_name, email, approval_status, university_id, course_id, password)
+VALUES
+  ('John Mwangi', 'john.mwangi@gmail.com', 'pending', 1, 1, 'password123'),
+  ('Michael Otieno', 'michael.otieno@gmail.com', 'pending', 1, 2, 'password123'),
+  ('Emily Wanjiru', 'emily.wanjiru@gmail.com', 'pending', 1, 3, 'password123'),
+  ('David Kiprop', 'david.kiprop@gmail.com', 'pending', 1, 4, 'password123'),
+  ('Sarah Njeri', 'sarah.njeri@gmail.com', 'pending', 1, 6, 'password123');

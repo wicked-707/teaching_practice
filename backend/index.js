@@ -212,16 +212,12 @@ app.post('/hods/signup', async (req, res) => {
   }
 });
 
+
 // HOD signin route
 app.post('/hods/signin', async (req, res) => {
   console.log('Received signin request:', req.body);
   const { email, password } = req.body;
 
-  // Validate input
-  if (!email || !password) {
-    console.log('Missing email or password');
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
 
   try {
     // Check if HOD exists
@@ -238,10 +234,10 @@ app.post('/hods/signin', async (req, res) => {
     const hod = hodResult.rows[0];
 
     // Validate password
-    const validPassword = await bcrypt.compare(password, hod.password);
-    console.log('Password valid:', validPassword);
+    // const validPassword = await bcrypt.compare(password, hod.password);
+    // console.log('Password valid:', validPassword);
 
-    if (!validPassword) {
+    if (password !== hod.password) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
@@ -262,18 +258,13 @@ app.post('/hods/signin', async (req, res) => {
     res.status(200).json({
       message: 'Signin successful',
       token,
-      data: {
-        id: hod.hod_id,
-        name: hod.hod_name,
-        email: hod.email,
-        university_id: hod.university_id,
-      }
     });
   } catch (error) {
     console.error('Error in HOD signin:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 // supervisor signUp route
@@ -385,26 +376,30 @@ app.get('/students/pending', async (req, res) => {
   try {
     const query = `
       SELECT 
-        registration_id, 
-        first_name, 
-        last_name, 
-        id_number, 
-        email, 
-        phone_number, 
-        university_id, 
-        graduation_date, 
-        primary_teaching_subject, 
-        secondary_teaching_subject, 
-        kenya_county, 
-        approval_status, 
-        approval_date, 
-        created_at, 
-        updated_at
+        s.registration_id, 
+        s.first_name, 
+        s.last_name, 
+        s.id_number, 
+        s.email, 
+        s.phone_number, 
+        s.university_id, 
+        s.graduation_date, 
+        c1.course_name AS primary_teaching_subject, 
+        c2.course_name AS secondary_teaching_subject, 
+        s.kenya_county, 
+        s.approval_status, 
+        s.approval_date, 
+        s.created_at, 
+        s.updated_at
       FROM 
-        student 
+        student s
+      LEFT JOIN 
+        course c1 ON s.primary_teaching_subject = c1.course_id
+      LEFT JOIN 
+        course c2 ON s.secondary_teaching_subject = c2.course_id
       WHERE 
-        approval_status = 'pending'
-    `;
+        s.approval_status = 'pending'
+    `; 
     
     const result = await pool.query(query);
     console.log(result);
@@ -422,11 +417,13 @@ app.get('/students/pending', async (req, res) => {
 
 
 
+
 // VERIFY THE STUDENTS
 // Update student status and approval date
-app.put('/students/:registration_id/status', async (req, res) => {
+app.put('/students/updateStatus/:registration_id', async (req, res) => {
   const { registration_id } = req.params;
-  const { approval_status } = req.body;
+  const { approval_status } = req.body; 
+ 
   
   // Validate input
   if (!['verified', 'rejected'].includes(approval_status)) {
@@ -451,9 +448,51 @@ app.put('/students/:registration_id/status', async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    res.json({ message: 'Student status updated successfully', student: result.rows[0] });
+    res.status(200).json({ message: 'Student status updated successfully', student: result.rows[0] });
   } catch (error) {
-    console.error('Error updating student status:', error);
+    console.log('Error updating student status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// get verified students
+app.get('/students/verified', async (req, res) => {
+  try {
+    const query = `
+      SELECT
+        s.registration_id,
+        s.first_name,
+        s.last_name,
+        s.id_number,
+        s.email,
+        s.phone_number,
+        s.university_id,
+        s.graduation_date,
+        c1.course_name AS primary_teaching_subject,
+        c2.course_name AS secondary_teaching_subject,
+        s.approval_status,
+        s.approval_date,
+        s.created_at,
+        s.updated_at
+      FROM
+        student s
+      LEFT JOIN
+        course c1 ON s.primary_teaching_subject = c1.course_id
+      LEFT JOIN
+        course c2 ON s.secondary_teaching_subject = c2.course_id
+      WHERE
+        s.approval_status = 'verified'
+    `;
+
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.json({ message: 'No verified students found' });
+    }
+
+    res.json({ students: result.rows });
+  } catch (error) {
+    console.error('Error fetching verified students:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -492,11 +531,7 @@ app.post('/student/signin', async (req, res) => {
       return res.status(400).json({ msg: 'Invalid email or passworddd' });
     }
 
-    // // Check for JWT_SECRET
-    // if (!process.env.JWT_SECRET) {
-    //   throw new Error('JWT_SECRET is not defined in the environment variables');
-    // }
-
+ 
     // Generate token
     const token = jwt.sign(
       { 
@@ -684,7 +719,7 @@ app.post('/high_school/signin', async (req, res) => {
 
 
 
-
+ 
 
 // HOD signUp
 app.post('/hods', async (req, res) => {
@@ -724,75 +759,6 @@ app.post('/hods', async (req, res) => {
 
 
 
-
-// HOD login
-app.post('/hod/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-  
-
-    // Check if HOD exists
-    const hodResult = await pool.query(
-      'SELECT * FROM hods WHERE email = $1',
-      [email]
-    );
-
-    if (hodResult.rows.length === 0) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    const hod = hodResult.rows[0];
-
-    // Compare the provided password with the hashed password in the database
-    // const isMatch = await bcrypt.compare(password, hod.password);
-
-    if (password !== hod.password) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Fetch university details
-    const universityResult = await pool.query(
-      'SELECT university_name FROM university WHERE university_id = $1',
-      [hod.university_id]
-    );
-
-    if (universityResult.rows.length === 0) {
-      return res.status(500).json({ message: 'University details not found' });
-    }
-
-    const university = universityResult.rows[0];
-
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        hod_id: hod.hod_id,
-        hod_name: hod.hod_name,
-        email: hod.email,
-        university_name: university.university_name,
-        role: "hod"
-      },
-      '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4',
-      { expiresIn: '1h' }
-    );
-
-    // Send response
-    res.json({
-      msg: 'Sign in successful',
-      token,
-      hod: {
-        hod_id: hod.hod_id,
-        hod_name: hod.hod_name,
-        email: hod.email,
-        university_name: university.university_name
-      }
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error'); // Handle any unexpected errors
-  }
-});
-
 // -----------------------------------------------------------------------------------
 
 
@@ -831,22 +797,25 @@ app.get('/supervisors/pending', async (req, res) => {
   try {
     const query = `
       SELECT 
-        id, 
-        supervisor_name, 
-        email, 
-        approval_status, 
-        university_id, 
-        course_id
+        s.id, 
+        s.supervisor_name, 
+        s.email, 
+        s.approval_status, 
+        s.university_id, 
+        s.course_id, 
+        c.course_name
       FROM 
-        supervisors
+        supervisors s
+      LEFT JOIN 
+        course c ON s.course_id = c.course_id
       WHERE 
-        approval_status = 'pending'
+        s.approval_status = 'pending'
     `;
 
     const result = await pool.query(query);
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'No pending supervisors found' });
+      return res.json({ message: 'No pending supervisors found' });
     }
 
     res.json({ pending_supervisors: result.rows });
@@ -860,18 +829,14 @@ app.get('/supervisors/pending', async (req, res) => {
 
 
 // Update supervisor status and approval date
-app.put('/supervisors/:id/status', async (req, res) => {
-  const { id } = req.params;
+app.put('/supervisors/updateStatus/:registrationId', async (req, res) => {
+  const { registrationId } = req.params;
   const { approval_status } = req.body;
-  
-  // Validate input
-  if (!['verified', 'rejected'].includes(approval_status)) {
-    return res.status(400).json({ message: 'Invalid approval status. It must be either "verified" or "rejected".' });
-  }
+  console.log('Received body:', registrationId, approval_status);
 
-  try {
+  try{
     const query = `
-      UPDATE supervisors 
+      UPDATE supervisors
       SET 
         approval_status = $1
       WHERE 
@@ -879,18 +844,52 @@ app.put('/supervisors/:id/status', async (req, res) => {
       RETURNING *
     `;
 
-    const result = await pool.query(query, [approval_status, id]);
+    const result = await pool.query(query, [approval_status, registrationId]);
 
     if (result.rows.length === 0) {
+      console.log('Supervisor not found');
       return res.status(404).json({ message: 'Supervisor not found' });
     }
+    console.log("Supervisor status updated successfully'");
+    res.status(200).json({ message: 'Supervisor status updated successfully', supervisor: result.rows[0] });
+  }catch(err){
+    console.log("Internal server Error", err);
+    return res.status(500).json({ message: 'Internal server error' })
+  }
+});
 
-    res.json({ message: 'Supervisor status updated successfully', supervisor: result.rows[0] });
+// fetch all verified supervisors
+app.get('/supervisors/verified', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        s.id, 
+        s.supervisor_name, 
+        s.email, 
+        s.approval_status, 
+        s.university_id, 
+        s.course_id, 
+        c.course_name
+      FROM 
+        supervisors s
+      LEFT JOIN 
+        course c ON s.course_id = c.course_id
+      WHERE 
+        s.approval_status = 'approved'
+    `;
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.json({ message: 'No verified supervisors found' });
+    }
+
+    res.json({ verified_supervisors: result.rows });
   } catch (error) {
-    console.error('Error updating supervisor status:', error);
+    console.error('Error fetching verified supervisors:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 // SUPERVISOR login
@@ -1435,7 +1434,7 @@ app.post('/grading/assessment-marks/:student_id', async (req, res) => {
   }
 });
 
-
+// 
 
 // GET THE GRADING OF A SINGLE STUDENT
 // Endpoint to fetch grading by student_id
@@ -1477,6 +1476,41 @@ app.get('/grading/:student_id', async (req, res) => {
 
 
 
+// overview data:
+app.get('/data/overview', async (req, res) => {
+  try {
+    const registeredStudentsQuery = 'SELECT COUNT(*) FROM student';
+    const approvedStudentsQuery = 'SELECT COUNT(*) FROM student WHERE approval_status = \'verified\'';
+    const pendingStudentsQuery = 'SELECT COUNT(*) FROM student WHERE approval_status = \'pending\'';
+
+    const registeredSupervisorsQuery = 'SELECT COUNT(*) FROM supervisors';
+    const pendingSupervisorsQuery = 'SELECT COUNT(*) FROM supervisors WHERE approval_status = \'pending\'';
+    const approvedSupervisorsQuery = 'SELECT COUNT(*) FROM supervisors WHERE approval_status = \'approved\'';
+
+    const [registeredStudentsResult, approvedStudentsResult, pendingStudentsResult, 
+           registeredSupervisorsResult, pendingSupervisorsResult, approvedSupervisorsResult] = await Promise.all([
+      pool.query(registeredStudentsQuery),
+      pool.query(approvedStudentsQuery),
+      pool.query(pendingStudentsQuery),
+      pool.query(registeredSupervisorsQuery),
+      pool.query(pendingSupervisorsQuery),
+      pool.query(approvedSupervisorsQuery)
+    ]);
+
+    res.json({
+      registered_students: registeredStudentsResult.rows,
+      approved_students: approvedStudentsResult.rows,
+      pending_students: pendingStudentsResult.rows,
+      registered_supervisors: registeredSupervisorsResult.rows,
+      pending_supervisors: pendingSupervisorsResult.rows,
+      approved_supervisors: approvedSupervisorsResult.rows
+    });
+
+  } catch (error) {
+    console.error('Error fetching data overview:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 
 
