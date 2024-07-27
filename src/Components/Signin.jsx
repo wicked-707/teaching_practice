@@ -13,8 +13,6 @@ const Signin = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
@@ -33,24 +31,29 @@ const Signin = () => {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
-        
       });
-      const { token, data} = response.data;
+      const { token, student } = response.data;
       console.log('Full response:', response);
       console.log('Response data:', response.data);
-      // console.log('Token:', response?.data?.token);
 
       if (token) {
         localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(data));
+        localStorage.setItem('user', JSON.stringify(student));
 
         const decodedToken = jwtDecode(token);
         const userRoles = decodedToken.role;
+        const approvalStatus = decodedToken.approval_status;
         console.log(userRoles);
 
         if (userRoles.includes('student')) {
-          const redirectTo = location.state?.from || '/studentportal';
-          navigate(redirectTo);
+          if (approvalStatus === 'approved') {
+            const redirectTo = location.state?.from || '/studentportal';
+            navigate(redirectTo);
+          } else if (approvalStatus === 'pending') {
+            const redirectTo = location.state?.from || '/pending';
+            navigate(redirectTo);
+            // setError('Your account is not yet approved.');
+          }
         } else if (userRoles.includes('hod')) {
           navigate('/hodportal');
         } else {
@@ -70,20 +73,18 @@ const Signin = () => {
   };
 
   return (
-   <div className="min-h-screen bg-slate-100 text-slate-900 text-center flex flex-col items-center justify-center p-8">
+    <div className="min-h-screen bg-slate-100 text-slate-900 text-center flex flex-col items-center justify-center p-8">
       <h1 className=" text-2xl md:text-4xl font-bold mb-4">Ready to Embark on Your Learning Journey?</h1>
       <h2 className="text-md md:text-2xl mb-8 md:max-w-2xl text-center text-slate-700">
         Unlock a world of knowledge and opportunities. Your academic adventure begins with a simple login.
       </h2>
-      
-      
-      
+
       <div className="login-container p-8 rounded-lg shadow-xl max-w-md w-full">
         <img 
-        src="https://img.icons8.com/emoji/12x/man-student.png" 
-        alt="Student studying" 
-        className="md:ml-20 w-36 h-36 ml-3 md:w-56 md:h-56 object-cover  mb-8"
-      />
+          src="https://img.icons8.com/emoji/12x/man-student.png" 
+          alt="Student studying" 
+          className="md:ml-20 w-36 h-36 ml-3 md:w-56 md:h-56 object-cover mb-8"
+        />
         {notification && <p className="text-green-600 mb-4">{notification}</p>}
         <h2 className="text-lg md:text-2xl font-semibold mb-6 text-center">Student Login</h2>
         <form onSubmit={handleSubmit}>
@@ -141,14 +142,14 @@ const Signin = () => {
         </div>
       </div>
       <div className='flex flex-row w-full justify-between'>
-      <Link to="/loginchoice" className="mt-8 text-cyan-500 pr-4 py-1 pl-3 rounded-3xl hover:underline flex items-center bg-slate-950 lg:ml-[418px]">
-      <img src="https://img.icons8.com/?size=80&id=1RH5tsh9xuwl&format=png" alt="" className=' w-4 h-4' />
-        <p className='ml-1 font-medium'>Back</p>
-      </Link>
-      <Link to="/" className="mt-8 text-cyan-500 pr-3 py-1 pl-2 rounded-3xl hover:underline flex items-center bg-slate-950 lg:mr-[418px]">
-      <img src="https://img.icons8.com/?size=80&id=VtR2yMi6rG8c&format=png" alt="" className='w-4 h-4' />
-        <p className='ml-1 font-medium'>Home</p>
-      </Link>
+        <Link to="/loginchoice" className="mt-8 text-cyan-500 pr-4 py-1 pl-3 rounded-3xl hover:underline flex items-center bg-slate-950 lg:ml-[418px]">
+          <img src="https://img.icons8.com/?size=80&id=1RH5tsh9xuwl&format=png" alt="" className=' w-4 h-4' />
+          <p className='ml-1 font-medium'>Back</p>
+        </Link>
+        <Link to="/" className="mt-8 text-cyan-500 pr-3 py-1 pl-2 rounded-3xl hover:underline flex items-center bg-slate-950 lg:mr-[418px]">
+          <img src="https://img.icons8.com/?size=80&id=VtR2yMi6rG8c&format=png" alt="" className='w-4 h-4' />
+          <p className='ml-1 font-medium'>Home</p>
+        </Link>
       </div>
     </div>
   );

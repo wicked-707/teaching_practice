@@ -26,7 +26,6 @@ import HodPortal from "./Components/HodPortal";
 import SupervisorPortal from "./Components/SupervisorPortal";
 import AdminPortal from "./Components/AdminPortal";
 import Dashboard from './Pages/Dashboard';
-import ManageUsers from './Pages/ManageUsers';
 import ManageVacancies from './Pages/ManageVacancies';
 import Reports from './Pages/Reports';
 import Settings from './Pages/Settings';
@@ -35,6 +34,15 @@ import SupervisorSignup from "./Components/SupervisorSignUp";
 import SupervisorSignin from "./Components/SupervisorSignin";
 import StudentSchemes from "./Components/student/AssessmentDetails";
 import StudentGrade from "./Components/student/grades";
+import AdminSignin from "./Components/AdminSignin";
+import Student from "./Pages/Student";
+import Universities from "./Pages/Universities";
+import HighSchool from "./Pages/HighSchool";
+import HODs from "./Pages/HODs";
+import Supervisors from "./Pages/Supervisors";
+import Courses from "./Pages/Courses";
+import AddCourses from "./Pages/AddCourses";
+import Pending from "./Components/Pending";
 const App = () => {
 
   const isAuthenticated = () => {
@@ -46,6 +54,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/adminsignin" element={<AdminSignin />} />
           <Route path="/unipage" element={<Unipage />} />
           <Route path="/studentportal" element={<Studentportal />} />
           <Route path="/loginchoice" element={<LoginChoice />} />
@@ -77,10 +86,17 @@ const App = () => {
               <HighschoolDash />
             </ProtectedRoute>}/>
           <Route path="/signin" element={<Signin />} />
+          <Route path="/pending" element={< Pending />} />
           <Route path="/adminportal" element={<AdminPortal />} />
           <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/users" element={<ManageUsers />} />
+          <Route path="/admin/student" element={<Student />} />
+          <Route path="/admin/highschool" element={<HighSchool />} />
+          <Route path="/admin/universities" element={<Universities />} />
+          <Route path="/admin/hods" element={<HODs />} />
+          <Route path="/admin/supervisors" element={<Supervisors />} />
           <Route path="/admin/vacancies" element={<ManageVacancies />} />
+          <Route path="/admin/courses" element={<Courses />} />
+          <Route path="/admin/addcourses" element={<AddCourses />} />
           <Route path="/admin/reports" element={<Reports />} />
           <Route path="/admin/settings" element={<Settings />} />
           <Route path="/admin/vacancy" element={<ProtectedRoute> <Vacancy /></ProtectedRoute>} />

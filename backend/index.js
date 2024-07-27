@@ -40,7 +40,7 @@ const JWT_SECRET = '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d9626793346
 
 const pool = new Pool({
   user: 'postgres',
-  password: 'drowssap',
+  password: '960X513OV',
   host: 'localhost',
   port: 5432,
   database: 'tp',
@@ -88,8 +88,137 @@ app.get('/universities', async (req, res) => {
   }
 });
 
+//--------------------------------------------------------------------------------
+
+// Route to delete a university by ID
+app.delete('/universities/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM university WHERE university_id = $1', [id]);
+    res.json({ message: 'University deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//---------------------------------------------------------------------------------
+
+// Route to get all HODs
+app.get('/hods', async (req, res) => {
+  try {
+    const allHODs = await pool.query('SELECT * FROM hods');
+    res.json(allHODs.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//---------------------------------------------------------------------------------
+
+// Route to delete a HOD by ID
+app.delete('/hods/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM hods WHERE hod_id = $1', [id]);
+    res.json({ message: 'HOD deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
 
 // -----------------------------------------------------------------------------------
+
+// Route to get all supervisors
+app.get('/supervisors', async (req, res) => {
+  try {
+    const allSupervisors = await pool.query('SELECT * FROM supervisors');
+    res.json(allSupervisors.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//-----------------------------------------------------------------------
+
+// Route to delete a supervisor by ID
+app.delete('/supervisors/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM supervisors WHERE id = $1', [id]);
+    res.json({ message: 'Supervisor deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//-------------------------------------------------------------------------------
+
+// Route to get all courses
+app.get('/courses', async (req, res) => {
+  try {
+    const allCourses = await pool.query('SELECT * FROM course');
+    res.json(allCourses.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//-----------------------------------------------------------------------------------
+
+// Route to delete a course by ID
+app.delete('/courses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM course WHERE course_id = $1', [id]);
+    res.json({ message: 'Course deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//----------------------------------------------------------------------------------------
+
+// Route to update a course by ID
+app.put('/courses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { course_code, course_name } = req.body;
+    await pool.query(
+      'UPDATE course SET course_code = $1, course_name = $2 WHERE course_id = $3',
+      [course_code, course_name, id]
+    );
+    res.json({ message: 'Course updated successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//----------------------------------------------------------------------------------------
+
+// Route to add a new course
+app.post('/courses', async (req, res) => {
+  try {
+    const { course_code, course_name } = req.body;
+    const newCourse = await pool.query(
+      'INSERT INTO course (course_code, course_name) VALUES ($1, $2) RETURNING *',
+      [course_code, course_name]
+    );
+    res.json(newCourse.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+//-------------------------------------------------------------------------------------------------
 
 // Student signUp
 app.post('/student', async (req, res) => {
@@ -142,7 +271,6 @@ app.post('/student', async (req, res) => {
   }
 });
 
-
 //----------------------------------------------------------------------------------
 
 // Route to register a new university
@@ -183,6 +311,8 @@ app.post('/register/universities', async (req, res) => {
   }
 });
 
+//--------------------------------------------------------------------------------------
+
 // HOD signup route
 app.post('/hods/signup', async (req, res) => {
   const { hod_name, email, password, university_id } = req.body;
@@ -211,6 +341,8 @@ app.post('/hods/signup', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+//-----------------------------------------------------------------------------------
 
 // HOD signin route
 app.post('/hods/signin', async (req, res) => {
@@ -275,6 +407,7 @@ app.post('/hods/signin', async (req, res) => {
   }
 });
 
+//----------------------------------------------------------------------------
 
 // supervisor signUp route
 app.post('/supervisor/signup', async (req, res) => {
@@ -320,10 +453,12 @@ app.post('/supervisor/signup', async (req, res) => {
   }
 });
 
+//--------------------------------------------------------------------------------
+
 // Supervisor signin route
 app.post('/supervisor/signin', async (req, res) => {
   const { email, password } = req.body;
-  console.log(email, password);
+  console.log('Signin attempt for:', email);
 
   // Validate input
   if (!email || !password) {
@@ -343,9 +478,7 @@ app.post('/supervisor/signin', async (req, res) => {
 
     const supervisor = supervisorResult.rows[0];
 
-    // Validate password
-    // const validPassword = await bcrypt.compare(password, supervisor.password);
-
+   // Directly compare passwords (not recommended for production)
     if (password !== supervisor.password) {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
@@ -359,17 +492,21 @@ app.post('/supervisor/signin', async (req, res) => {
         university_id: supervisor.university_id,
         course_id: supervisor.course_id,
         approval_status: supervisor.approval_status,
-        course: supervisor.course_id,
         role: "supervisor",
       },
-      '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4',
+      process.env.JWT_SECRET || '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4',
       { expiresIn: '1h' }
     );
 
-    // Return success response with token
+    // Return success response with token and approval status
     res.status(200).json({
       message: 'Signin successful',
       token,
+      data: {
+        name: supervisor.supervisor_name,
+        email: supervisor.email,
+        approval_status: supervisor.approval_status
+      }
     });
   } catch (error) {
     console.error('Error in supervisor signin:', error);
@@ -378,6 +515,43 @@ app.post('/supervisor/signin', async (req, res) => {
 });
 
 
+//------------------------------------------------------------------------------
+
+// Admin signin route
+app.post('/admin/signin', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if admin exists
+    const query = 'SELECT * FROM admin WHERE email = $1';
+    const result = await pool.query(query, [email]);
+    const admin = result.rows[0];
+    console.log(admin)
+
+    if (!admin) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    if (admin.password !== password) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+  { admin_id: admin.admin_id, name: admin.admin_name, email: admin.email, role: admin.role },
+  'JWT_SECRET',
+  { expiresIn: '1h' }
+  );
+
+
+    res.json({ token, message: 'Login successful' });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//---------------------------------------------------------------------------------
 
 // ALL UNVERIFIED STUDENTS
 // Fetch all students with pending status
@@ -420,7 +594,7 @@ app.get('/students/pending', async (req, res) => {
   }
 });
 
-
+//----------------------------------------------------------------------------------
 
 // VERIFY THE STUDENTS
 // Update student status and approval date
@@ -458,7 +632,7 @@ app.put('/students/:registration_id/status', async (req, res) => {
   }
 });
 
-
+//--------------------------------------------------------------------------------------
 
 // LOGIN THE STUDENT
 // student signin
@@ -487,15 +661,9 @@ app.post('/student/signin', async (req, res) => {
     console.log(student);
 
     // Verify password
-    // const isValidPassword = await bcrypt.compare(hashed_password, student.hashed_password);
     if (hashed_password !== student.password) {
-      return res.status(400).json({ msg: 'Invalid email or passworddd' });
+      return res.status(400).json({ msg: 'Invalid email or password' });
     }
-
-    // // Check for JWT_SECRET
-    // if (!process.env.JWT_SECRET) {
-    //   throw new Error('JWT_SECRET is not defined in the environment variables');
-    // }
 
     // Generate token
     const token = jwt.sign(
@@ -505,7 +673,8 @@ app.post('/student/signin', async (req, res) => {
         last_name: student.last_name,
         email: student.email,
         university_name: student.university_id,
-        role: "student"
+        role: "student",
+        approval_status: student.approval_status  // Include approval_status in the token
       },
       '191cedcb0d23f2334a73f6dfdb9ae36972e3c57b624012ba8d962679334601e46f7e2686bcb4e480fb403961a58c33d740d814540d9cd94814f7712adc650dc4',
       { expiresIn: '1h' }
@@ -515,27 +684,72 @@ app.post('/student/signin', async (req, res) => {
     res.json({
       msg: 'Sign in successful',
       token,
-      // student
-        });
+      student: {
+        registration_id: student.registration_id,
+        first_name: student.first_name,
+        last_name: student.last_name,
+        email: student.email,
+        university_name: student.university_id,
+        role: "student",
+        approval_status: student.approval_status // Include approval_status in the response
+      }
+    });
 
   } catch (error) {
-    console.error('Signin errorrrr:', error);
+    console.error('Signin error:', error);
     res.status(500).json({ msg: 'Server error', error: error.message });
   }
 });
 
-
 // -----------------------------------------------------------------------------------
 
+// DELETE route to remove a vacancy by ID
+app.delete('/vacancies/:id', async (req, res) => {
+  const { id } = req.params;
+  const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
 
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
 
+  try {
+    // Verify JWT token here (you may use a library like jsonwebtoken)
 
+    // Assuming you have a valid token, proceed to delete the vacancy
+    const result = await pool.query('DELETE FROM vacancy WHERE vacancy_id = $1 RETURNING *', [id]);
 
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Vacancy not found' });
+    }
 
+    res.status(200).json({ message: 'Vacancy deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting vacancy:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
+//---------------------------------------------------------------------------------
 
+ // fetch data by year for graphical cmparison
+app.get('/vacancies/yearly', async (req, res) => {
+  try {
+    // Query to get the number of vacancies posted each year
+    const result = await pool.query(`
+      SELECT EXTRACT(YEAR FROM stat_date) AS year, COUNT(*) AS count
+      FROM vacancy
+      GROUP BY EXTRACT(YEAR FROM stat_date)
+      ORDER BY year
+    `);
 
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching yearly vacancy data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
+//-----------------------------------------------------------------------
 
 // University signup
 app.post('/university', async (req, res) => {
@@ -544,8 +758,6 @@ app.post('/university', async (req, res) => {
       university_name, registration_number, charter_number,
       official_email, website, county 
     } = req.body;
-
-  
 
     // Check for existing university
     const existingUniversity = await pool.query(
@@ -556,7 +768,6 @@ app.post('/university', async (req, res) => {
     if (existingUniversity.rows.length > 0) {
       return res.status(400).json({ msg: 'University with this registration number or email already exists' });
     }
-
     // Insert into database
     const newUniversity = await pool.query(
       `INSERT INTO university (
@@ -577,15 +788,6 @@ app.post('/university', async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 // HIGH SCHOOL SIGNUP
 app.post('/high_school', async (req, res) => {
@@ -621,7 +823,7 @@ app.post('/high_school', async (req, res) => {
   }
 });
 
-
+//-------------------------------------------------------------------------------------
 
 //  HIGH SCHOOL SIGN IN
 app.post('/high_school/signin', async (req, res) => {
@@ -671,20 +873,7 @@ app.post('/high_school/signin', async (req, res) => {
   }
 });
 
-
 // -----------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
 
 // HOD signUp
 app.post('/hods', async (req, res) => {
@@ -721,9 +910,7 @@ app.post('/hods', async (req, res) => {
   }
 });
 
-
-
-
+//---------------------------------------------------------------------------------------
 
 // HOD login
 app.post('/hod/login', async (req, res) => {
@@ -787,6 +974,24 @@ app.post('/hod/login', async (req, res) => {
         university_name: university.university_name
       }
     });
+
+    //-----------------------------------------------------------------
+
+app.get('/students', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        registration_id, first_name, last_name, id_number, email, phone_number, 
+        university_id, graduation_date, primary_teaching_subject, secondary_teaching_subject,
+        kenya_county, approval_status, approval_date, created_at, updated_at
+      FROM student
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching student data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error'); // Handle any unexpected errors
@@ -794,15 +999,6 @@ app.post('/hod/login', async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 // supervisors signUp
 app.post('/supervisors', async (req, res) => {
@@ -855,8 +1051,6 @@ app.get('/supervisors/pending', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
 
 
 // Update supervisor status and approval date
@@ -943,17 +1137,7 @@ app.post('/supervisors/signin', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
 // ================================================================================
-
-
 
 // Endpoint to handle POST requests to insert into vacancy table
 app.post('/vacancy', async (req, res) => {
@@ -1055,6 +1239,23 @@ app.get('/vacancies', async (req, res) => {
 });
 
 
+// getting the latest vacancies
+app.get('/vacancies/recent', async (req, res) => {
+  try {
+    const query = `
+      SELECT vancancy_id, primary_subject, secondary_subject, positions_available, application_deadline
+      FROM vacancy
+      ORDER BY created_at DESC
+      LIMIT 5
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching recent vacancies:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // VACANCY BY ID
 app.get('/vacancy/:vancancy_id', async (req, res) => {
   try {
@@ -1093,10 +1294,6 @@ app.get('/vacancy/:vancancy_id', async (req, res) => {
 });
 
 // ================================================================================================================================================================
-
-
-
-
 
 // Endpoint to submit schemes of work for a specific week
 app.post('/schemes_of_work', async (req, res) => {
@@ -1148,8 +1345,6 @@ app.post('/schemes_of_work', async (req, res) => {
   }
 });
 
-
-
 // POST endpoint to add a lesson plan
 app.post('/lesson-plan', async (req, res) => {
   try {
@@ -1192,8 +1387,6 @@ app.post('/lesson-plan', async (req, res) => {
 });
 
 
-
-
 // get all student
 
 app.get('/students/verified', async (req, res) => {
@@ -1233,9 +1426,6 @@ app.get('/students/verified', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
-
 
 // FETCH BY SUBJECT
 app.get('/students/subject/:subjectId', async (req, res) => {
@@ -1277,14 +1467,6 @@ app.get('/students/subject/:subjectId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-
-
-
-
-
-
-
 
 // FETCH ALL THE SCHEME OF WORK FOR A SINGLE STUDENT:
 app.get('/schemes_of_work/:student_id', async (req, res) => {
@@ -1372,8 +1554,6 @@ app.get('/schemes_of_work/:student_id', async (req, res) => {
   }
 });
 
-
-
 // GET ALL Lesson Plan
 // GET endpoint to fetch lesson plans for a specific student
 app.get('/lesson-plans/:student_id', async (req, res) => {
@@ -1409,7 +1589,6 @@ app.get('/lesson-plans/:student_id', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 
 // Endpoint to add assessment marks
 app.post('/grading/assessment-marks/:student_id', async (req, res) => {
@@ -1461,66 +1640,133 @@ app.get('/grading/:student_id', async (req, res) => {
   }
 });
 
+//------------------------------------------------------------------------------
+
+// fetching student details in admin
+app.get('/students', async (req, res) => {
+  try {
+    const query = `
+      SELECT s.*, u.university_name, c1.course_name as primary_subject, c2.course_name as secondary_subject
+      FROM student s
+      LEFT JOIN university u ON s.university_id = u.university_id
+      LEFT JOIN course c1 ON s.primary_teaching_subject = c1.course_id
+      LEFT JOIN course c2 ON s.secondary_teaching_subject = c2.course_id
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+//----------------------------------------------------------------------------
+
+// deleting student account
+app.delete('/students/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First, check if the student exists
+    const checkStudent = await pool.query('SELECT * FROM student WHERE registration_id = $1', [id]);
+    
+    if (checkStudent.rows.length === 0) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // If student exists, proceed with deletion
+    await pool.query('DELETE FROM student WHERE registration_id = $1', [id]);
+    
+    res.status(200).json({ message: 'Student deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//------------------------------------------------------------------------------
+
+// Route to get all high schools
+app.get('/highSchools', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM high_school');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 
+// Middleware to verify admin role
+const verifyAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ msg: 'Access denied. Admins only.' });
+  }
+  next();
+};
+
+//--------------------------------------------------------------------------------------------------------------
+
+// Route to get admin information
+app.get('/admin', verifyAdmin, async (req, res) => {
+  try {
+    const admin = await pool.query('SELECT admin_id, admin_name, email, role FROM admin WHERE admin_id = $1', [req.user.id]);
+    res.json(admin.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Route to update admin information
+app.put('/admin', verifyAdmin, async (req, res) => {
+  try {
+    const token = req.headers['token'];
+    if (!token) {
+      return res.status(403).json({ error: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET); // Replace 'your_jwt_secret' with your actual secret
+    if (!decoded.role || (Array.isArray(decoded.role) && !decoded.role.includes('admin')) || 
+        (typeof decoded.role === 'string' && decoded.role !== 'admin')) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { admin_name, email, password } = req.body;
+
+    const updateQuery = 'UPDATE admin SET admin_name = $1, email = $2, password = $3 WHERE email = $4 RETURNING *';
+    const updatedAdmin = await pool.query(updateQuery, [admin_name, email, password, decoded.email]);
+
+    res.json(updatedAdmin.rows[0]);
+  } catch (err) {
+    console.error('Error updating admin data:', err);
+    res.status(500).json({ error: 'Server error', msg: err.message });
+  }
+});
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Route to fetch monthly registered schools
+app.get('/schools/monthly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+          TO_CHAR(created_at, 'YYYY-MM') AS month,
+          COUNT(*) AS count
+      FROM 
+          high_school
+      GROUP BY 
+          TO_CHAR(created_at, 'YYYY-MM')
+      ORDER BY 
+          month;
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching monthly registered schools:', error);
+    res.status(500).send('Server error');
+  }
+});
+//--------------------------------------------------------------------------------------------------------------
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -1539,7 +1785,7 @@ const authenticateJWT = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, 'your_jwt_secret');
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
