@@ -4,7 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import logo1 from '../assets/logo1.jpeg';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 
@@ -38,6 +38,21 @@ const Home = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const [vacancies, setVacancies] = useState([]);
+
+  useEffect(() => {
+    fetchVacancies();
+  }, []);
+
+  const fetchVacancies = async () => {
+    try {
+      const response = await axios.get('/api/vacancies/recent');
+      setVacancies(response.data);
+    } catch (error) {
+      console.error('Error fetching vacancies:', error);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -216,6 +231,32 @@ const Home = () => {
               Trust in our secure data management practices to keep your information safe. Your privacy is our top priority.
             </p>
           </Link>
+        </div>
+      </div>
+    </div>
+
+    {/* latest vacancies */}
+
+    <div className="bg-gray-100 py-8">
+      <div className="container mx-auto">
+        <h2 className="text-3xl font-bold mb-6 text-center">Recent Vacancies</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vacancies.map((vacancy) => (
+            <div key={vacancy.vancancy_id} className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-xl font-semibold mb-2">{vacancy.primary_subject}</h3>
+              <p className="text-gray-600 mb-2">Secondary: {vacancy.secondary_subject}</p>
+              <p className="text-gray-600 mb-2">Positions: {vacancy.positions_available}</p>
+              <p className="text-gray-600 mb-2">
+                Deadline: {new Date(vacancy.application_deadline).toLocaleDateString()}
+              </p>
+              <Link
+                to={`/vacancy/${vacancy.vancancy_id}`}
+                className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
+              >
+                View More
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </div>

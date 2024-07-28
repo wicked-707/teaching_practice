@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import {jwtDecode} from 'jwt-decode';
+import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const SupervisorSignin = () => {
-  const [email, setEmail] = useState('jane.doe@example.com');
-  const [password, setPassword] = useState('SecureP@ssw0rd');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors = {};
@@ -23,29 +24,31 @@ const SupervisorSignin = () => {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post('http://localhost:5000/supervisor/signin', {
+      const response = await axios.post('/api/supervisor/signin', {
         email,
         password,
       });
-      setMessage(response.data.message);
-      alert('sign in succesful')
-      console.log("djks");
-      // Handle successful signin, e.g., store token, redirect, etc.
+      
+      const { token, data } = response.data;
+      console.log(response.data)
 
-      const { token, data} = response.data;
-     
-      if(!token) throw new Error('No Token Found')
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(data));
-        const decodedToken = jwtDecode(token);
-        const approval_status = decodedToken.approval_status;
-      // redirect to supersor page in the status is verified
+      if (!token) throw new Error('No Token Found');
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(data));
+      
+      const decodedToken = jwtDecode(token);
+      const approval_status = decodedToken.approval_status;
 
-      // console.log("decodedToken", decodedToken);
-      window.location.href = '/supervisorportal';
+      setMessage('Sign in successful');
 
-      if (approval_status === 'verified') {
-        window.location.href = '/supervisorportal';
+      // Redirect based on approval status
+      if (approval_status === 'approved') {
+        navigate('/supervisorportal');
+      } else if (approval_status === 'pending') {
+        navigate('/pending');
+      } else {
+        setMessage('Your account status is not recognized.');
       }
     } catch (error) {
       if (error.response && error.response.data.message) {
@@ -53,6 +56,7 @@ const SupervisorSignin = () => {
       } else {
         setMessage('Error submitting form');
       }
+      console.error('Signin error:', error);
     }
   };
 
@@ -91,13 +95,13 @@ const SupervisorSignin = () => {
         </button>
       </form>
       <div className="mt-6 text-center">
-          <p className="text-sm">
-            Don't have an account?{' '}
-            <Link to="/supervisorsignup" className="text-blue-600 hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </div>
+        <p className="text-sm">
+          Don't have an account?{' '}
+          <Link to="/supervisorsignup" className="text-blue-600 hover:underline">
+            Sign Up
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

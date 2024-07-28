@@ -18,6 +18,9 @@ const navigate = useNavigate();
     const goToStudent = () => {
     navigate('/signin');
   }; 
+    const goToAdmin = () => {
+    navigate('/adminsignin');
+  }; 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-500 flex flex-col items-center justify-center p-8">
       <h1 className="text-4xl font-bold mb-4 text-slate-700">Who Will You Be Today?</h1>
@@ -44,6 +47,9 @@ const navigate = useNavigate();
         </button>
         <button onClick={goToSchool} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
           High School
+        </button>
+        <button onClick={goToAdmin} className="bg-slate-900 text-orange-500 px-6 py-3 rounded-lg hover:bg-slate-800 transition duration-300">
+          Administrator
         </button>
       </div>
       

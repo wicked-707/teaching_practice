@@ -1,97 +1,102 @@
-import React, { useEffect, useRef } from 'react';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
-import { Bar, Pie, Line } from 'react-chartjs-2';
-import { useTable } from 'react-table';
-
-// Register required components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
+import React, { useEffect, useRef, useState } from 'react';
+import { Bar } from 'react-chartjs-2';
+import axios from 'axios';
+import Chart from 'chart.js/auto';
 
 const Dashboard = () => {
   const barChartRef = useRef(null);
-  const pieChartRef = useRef(null);
-  const lineChartRef = useRef(null);
-
-  useEffect(() => {
-    const barChartInstance = barChartRef.current;
-    const pieChartInstance = pieChartRef.current;
-    const lineChartInstance = lineChartRef.current;
-
-    return () => {
-      if (barChartInstance) barChartInstance.destroy();
-      if (pieChartInstance) pieChartInstance.destroy();
-      if (lineChartInstance) lineChartInstance.destroy();
-    };
-  }, []);
-
-  const barData = {
-    labels: ['2025', '2026', '2027', '2028', '2029', '2030', '2031'],
+  const [barData, setBarData] = useState({
+    labels: [],
     datasets: [
       {
         label: 'Uploaded Vacancies',
-        data: [65, 59, 80, 81, 56, 55, 40],
+        data: [],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1,
       },
     ],
-  };
+  });
 
-  const pieData = {
-    labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+  const [schoolData, setSchoolData] = useState({
+    labels: [],
     datasets: [
       {
-        label: 'Sales Distribution',
-        data: [12, 19, 3, 5, 2, 3],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-        ],
+        label: 'Schools Registered Each Month',
+        data: [],
+        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+        borderColor: 'rgba(153, 102, 255, 1)',
         borderWidth: 1,
       },
     ],
-  };
+  });
 
-  const lineData = {
-    labels: ['2025', '2026', '2027', '2028', '2029', '2030', '2031'],
-    datasets: [
-      {
-        label: 'Yearly Application',
-        data: [33, 25, 35, 51, 54, 76, 65],
-        fill: false,
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchVacancyData = async () => {
+      try {
+        const response = await axios.get('/api/vacancies/yearly'); // Replace with your API endpoint
+        const data = response.data; // Assuming the data is in the format [{ year: '2024', count: 65 }, ...]
+
+        // Extract labels and data
+        const labels = data.map(item => item.year);
+        const dataValues = data.map(item => item.count);
+
+        setBarData({
+          labels: labels,
+          datasets: [
+            {
+              label: 'Uploaded Vacancies',
+              data: dataValues,
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Error fetching vacancy data:', error);
+      }
+    };
+
+    const fetchSchoolData = async () => {
+      try {
+        const response = await axios.get('/api/schools/monthly'); // Replace with your API endpoint
+        const data = response.data; // Assuming the data is in the format [{ month: '2024-01', count: 15 }, ...]
+
+        // Extract labels and data
+        const labels = data.map(item => item.month);
+        const dataValues = data.map(item => item.count);
+
+        setSchoolData({
+          labels: labels,
+          datasets: [
+            {
+              label: 'Schools Registered Each Month',
+              data: dataValues,
+              backgroundColor: 'rgba(153, 102, 255, 0.6)',
+              borderColor: 'rgba(153, 102, 255, 1)',
+              borderWidth: 1,
+            },
+          ],
+        });
+      } catch (error) {
+        console.error('Error fetching school data:', error);
+      }
+    };
+
+    fetchVacancyData();
+    fetchSchoolData();
+  }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Bar Chart</h2>
-          <Bar ref={barChartRef} data={barData} />
-        </div>
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Pie Chart</h2>
-          <Pie ref={pieChartRef} data={pieData} />
-        </div>
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Line Chart</h2>
-          <Line ref={lineChartRef} data={lineData} />
-        </div>
+    <div className='flex flex-col'>
+      <div className="p-4 mb-4">
+        <h2 className="text-xl font-semibold mb-4">Vacancies Posted Each Year</h2>
+        <Bar ref={barChartRef} data={barData} />
+      </div>
+      <div className="p-4 mb-4">
+        <h2 className="text-xl font-semibold mb-4">Schools Registered Each Month</h2>
+        <Bar ref={barChartRef} data={schoolData} />
       </div>
     </div>
   );
