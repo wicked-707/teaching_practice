@@ -54,7 +54,7 @@ const Signin = () => {
             navigate("/pending");
             setError('Your account is not yet approved.');
         } else {
-          setError('Unrecognived approval status');
+          setError('Unrecognived approval  status');
         }
       } else {
         setError('Invalid response from server');
